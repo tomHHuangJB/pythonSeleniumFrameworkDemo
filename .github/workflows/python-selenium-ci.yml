@@ -1,0 +1,74 @@
+name: Python Selenium CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: http://localhost:5173
+      BROWSER: chrome
+      HEADLESS: true
+      LOCAL_AUTOMATION_APP_REPO: ${{ secrets.LOCAL_AUTOMATION_APP_REPO }}
+      LOCAL_AUTOMATION_APP_REF: ${{ secrets.LOCAL_AUTOMATION_APP_REF }}
+    steps:
+      - name: Checkout framework
+        uses: actions/checkout@v4
+
+      - name: Ensure LocalAutomationApp repo is configured
+        run: |
+          if [ -z "$LOCAL_AUTOMATION_APP_REPO" ]; then
+            echo "LOCAL_AUTOMATION_APP_REPO is not set. Add it as a repository secret." >&2
+            exit 1
+          fi
+
+      - name: Checkout LocalAutomationApp
+        run: |
+          git clone "$LOCAL_AUTOMATION_APP_REPO" LocalAutomationApp
+          if [ -n "$LOCAL_AUTOMATION_APP_REF" ]; then
+            cd LocalAutomationApp
+            git checkout "$LOCAL_AUTOMATION_APP_REF"
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Start LocalAutomationApp (docker)
+        run: |
+          cd LocalAutomationApp
+          docker compose --profile stable up -d --build
+
+      - name: Wait for app
+        run: |
+          for i in {1..30}; do
+            if curl -fsS "$BASE_URL" >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "App did not start in time" >&2
+          exit 1
+
+      - name: Run tests
+        run: |
+          . .venv/bin/activate
+          pytest -q --base-url=$BASE_URL --browser=$BROWSER --headless=$HEADLESS
+
+      - name: Shutdown LocalAutomationApp
+        if: always()
+        run: |
+          cd LocalAutomationApp
+          docker compose --profile stable down -v
