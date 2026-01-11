@@ -55,6 +55,7 @@ docker exec python-selenium-jenkins cat /var/jenkins_home/secrets/initialAdminPa
 3) Create a Pipeline job:
 - Pipeline from SCM, repository path = this repo
 - Script path: `Jenkinsfile`
+- For local Jenkins in Docker, use repo URL `file:///opt/python-repo` (mounted by `docker-compose.jenkins.yml`).
 
 First run checklist:
 - Install suggested plugins (Git, Pipeline, JUnit, Docker).
@@ -67,6 +68,7 @@ Notes:
 - When using the `app` profile, set `BASE_URL` to `http://local-frontend:5173`.
 - If you're running LocalAutomationApp on the host, keep `BASE_URL` as `http://host.docker.internal:5173`.
 - In Jenkins, you can toggle `USE_APP_PROFILE` to auto-set `BASE_URL` to `http://local-frontend:5173`.
+- Local SCM uses a mounted repo at `file:///opt/python-repo`, with local checkout enabled in `docker-compose.jenkins.yml`.
 
 ## Troubleshooting
 - `host.docker.internal` not resolving: set `BASE_URL` to your host IP (e.g. `http://192.168.1.10:5173`) or use the `app` profile.
