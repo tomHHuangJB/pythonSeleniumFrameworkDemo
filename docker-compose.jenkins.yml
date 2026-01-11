@@ -1,0 +1,57 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: python-selenium-jenkins
+    ports:
+      - "${JENKINS_HTTP_PORT:-9082}:8080"
+      - "${JENKINS_AGENT_PORT:-50001}:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    depends_on:
+      - selenium
+
+  selenium:
+    image: selenium/standalone-chrome:4.19.0
+    container_name: python-selenium-grid
+    shm_size: "2gb"
+    ports:
+      - "${SELENIUM_PORT:-4445}:4444"
+
+  local-backend:
+    build:
+      context: ${LOCAL_AUTOMATION_APP_DIR:-../../LocalAutomationApp}/backend
+      dockerfile: Dockerfile
+    ports:
+      - "${LOCAL_AUTOMATION_BACKEND_PORT:-3001}:3001"
+    environment:
+      FAILURE_RATE: ${FAILURE_RATE:-0}
+      AVERAGE_DELAY_MS: ${AVERAGE_DELAY_MS:-0}
+      ENABLE_WEBSOCKETS: ${ENABLE_WEBSOCKETS:-true}
+      ALLOW_CORS_FROM: ${ALLOW_CORS_FROM:-*}
+      GLOBAL_SEED: ${GLOBAL_SEED:-42}
+      FAILURE_PATTERN: ${FAILURE_PATTERN:-}
+      TIME_SKEW_MS: ${TIME_SKEW_MS:-0}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    profiles: ["app"]
+
+  local-frontend:
+    build:
+      context: ${LOCAL_AUTOMATION_APP_DIR:-../../LocalAutomationApp}/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${LOCAL_AUTOMATION_FRONTEND_PORT:-5173}:5173"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://local-backend:3001}
+    depends_on:
+      local-backend:
+        condition: service_healthy
+    profiles: ["app"]
+
+volumes:
+  jenkins_home:
