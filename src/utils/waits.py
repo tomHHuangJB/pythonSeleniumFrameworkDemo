@@ -12,6 +12,9 @@ class Waits:
     def visible(self, locator: tuple[str, str]):
         return self.wait.until(EC.visibility_of_element_located(locator))
 
+    def present(self, locator: tuple[str, str]):
+        return self.wait.until(EC.presence_of_element_located(locator))
+
     def clickable(self, locator: tuple[str, str]):
         return self.wait.until(EC.element_to_be_clickable(locator))
 
