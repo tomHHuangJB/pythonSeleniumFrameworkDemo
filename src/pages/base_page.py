@@ -28,7 +28,6 @@ class BasePage:
             "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
             element,
         )
-        element = self.waits.visible(locator)
         self.driver.execute_script("arguments[0].click();", element)
 
     def type(self, locator: tuple[str, str], text: str) -> None:
