@@ -11,15 +11,16 @@ CRUMB_FIELD=$(printf '%s' "$CRUMB_JSON" | sed -n 's/.*"crumbRequestField":"\([^"
 
 RESP=$(mktemp)
 DATA='json={}'
+BUILD_ENDPOINT="$JENKINS_URL/job/$JOB_NAME/buildWithParameters"
 if [ -n "$CRUMB" ] && [ -n "$CRUMB_FIELD" ]; then
   STATUS=$(curl -sS -o "$RESP" -w "%{http_code}" -X POST \
     -u "$USER:$TOKEN" -H "$CRUMB_FIELD: $CRUMB" \
     -H "Content-Type: application/x-www-form-urlencoded" \
-    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/build" || true)
+    --data "$DATA" "$BUILD_ENDPOINT" || true)
 else
   STATUS=$(curl -sS -o "$RESP" -w "%{http_code}" -X POST \
     -u "$USER:$TOKEN" -H "Content-Type: application/x-www-form-urlencoded" \
-    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/build" || true)
+    --data "$DATA" "$BUILD_ENDPOINT" || true)
 fi
 
 if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then

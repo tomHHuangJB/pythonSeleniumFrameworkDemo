@@ -18,8 +18,8 @@ DATA='json={}'
 if [ -n "$CRUMB" ] && [ -n "$CRUMB_FIELD" ]; then
   curl -sS -X POST -u "$USER:$TOKEN" -H "$CRUMB_FIELD: $CRUMB" \
     -H "Content-Type: application/x-www-form-urlencoded" --data "$DATA" \
-    "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+    "$JENKINS_URL/job/$JOB_NAME/buildWithParameters" >/dev/null
 else
   curl -sS -X POST -u "$USER:$TOKEN" -H "Content-Type: application/x-www-form-urlencoded" \
-    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/buildWithParameters" >/dev/null
 fi

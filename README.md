@@ -87,12 +87,13 @@ docker exec python-selenium-jenkins cat /var/jenkins_home/secrets/initialAdminPa
 
 Auto-trigger local Jenkins on push (local-only):
 1) Create a Jenkins API token for your user (Profile -> Configure -> API Token).
-2) Add a `post-push` hook in this repo to call Jenkins with a CSRF crumb.
+2) Add a `pre-push` hook in this repo to call Jenkins with a CSRF crumb.
 3) Push new commits from this repo to trigger builds automatically.
+Note: Git does not support a `post-push` hook; use `pre-push`.
 
 Minimal hook (replace USER/TOKEN):
 ```bash
-cat > .git/hooks/post-push <<'EOF'
+cat > .git/hooks/pre-push <<'EOF'
 #!/bin/sh
 JENKINS_URL="http://localhost:9082"
 JOB_NAME="python-selenium-ci"
@@ -105,19 +106,19 @@ DATA='json={}'
 if [ -n "$CRUMB" ] && [ -n "$CRUMB_FIELD" ]; then
   curl -sS -X POST -u "$USER:$TOKEN" -H "$CRUMB_FIELD: $CRUMB" \
     -H "Content-Type: application/x-www-form-urlencoded" --data "$DATA" \
-    "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+    "$JENKINS_URL/job/$JOB_NAME/buildWithParameters" >/dev/null
 else
   curl -sS -X POST -u "$USER:$TOKEN" -H "Content-Type: application/x-www-form-urlencoded" \
-    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/buildWithParameters" >/dev/null
 fi
 EOF
-chmod +x .git/hooks/post-push
+chmod +x .git/hooks/pre-push
 ```
 
 Alternative: copy the tracked hook template and edit it:
 ```bash
-cp scripts/post-push.example .git/hooks/post-push
-chmod +x .git/hooks/post-push
+cp scripts/pre-push.example .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
 ```
 
 Auto-trigger local Jenkins on commit (local-only):

@@ -1,9 +1,9 @@
 #!/bin/sh
-# Example git post-push hook to trigger a local Jenkins build.
+# Example git pre-push hook to trigger a local Jenkins build.
 # Usage:
-# 1) Copy this file to .git/hooks/post-push
+# 1) Copy this file to .git/hooks/pre-push
 # 2) Update USER/TOKEN/JOB_NAME if needed
-# 3) chmod +x .git/hooks/post-push
+# 3) chmod +x .git/hooks/pre-push
 
 JENKINS_URL="http://localhost:9082"
 JOB_NAME="python-selenium-ci"
@@ -18,8 +18,8 @@ DATA='json={}'
 if [ -n "$CRUMB" ] && [ -n "$CRUMB_FIELD" ]; then
   curl -sS -X POST -u "$USER:$TOKEN" -H "$CRUMB_FIELD: $CRUMB" \
     -H "Content-Type: application/x-www-form-urlencoded" --data "$DATA" \
-    "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+    "$JENKINS_URL/job/$JOB_NAME/buildWithParameters" >/dev/null
 else
   curl -sS -X POST -u "$USER:$TOKEN" -H "Content-Type: application/x-www-form-urlencoded" \
-    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/buildWithParameters" >/dev/null
 fi
