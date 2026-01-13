@@ -41,6 +41,7 @@ pipeline {
     post {
         always {
             junit "reports/junit.xml"
+            archiveArtifacts artifacts: "reports/**,downloads/**", fingerprint: true, allowEmptyArchive: true
         }
     }
 }

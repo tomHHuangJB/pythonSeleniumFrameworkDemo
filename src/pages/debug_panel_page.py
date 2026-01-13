@@ -21,10 +21,12 @@ class DebugPanelPage(BasePage):
         return len(self.driver.find_elements(*self.close_btn)) > 0
 
     def toggle_show_testids(self) -> None:
-        self.click(self.show_testids)
+        # CI runs can have overlay timing issues; JS click avoids intercepted clicks.
+        self.js_click(self.show_testids)
 
     def toggle_offline(self) -> None:
-        self.click(self.simulate_offline)
+        # CI runs can have overlay timing issues; JS click avoids intercepted clicks.
+        self.js_click(self.simulate_offline)
 
     def select_network_profile(self, value: str) -> None:
         self.select_by_value(self.network_profile, value)

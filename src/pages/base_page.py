@@ -22,6 +22,14 @@ class BasePage:
     def click(self, locator: tuple[str, str]) -> None:
         self.waits.clickable(locator).click()
 
+    def js_click(self, locator: tuple[str, str]) -> None:
+        element = self.waits.visible(locator)
+        self.driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+            element,
+        )
+        self.driver.execute_script("arguments[0].click();", element)
+
     def type(self, locator: tuple[str, str], text: str) -> None:
         element = self.waits.visible(locator)
         element.clear()

@@ -65,7 +65,18 @@ jobs:
       - name: Run tests
         run: |
           . .venv/bin/activate
-          pytest -q --base-url=$BASE_URL --browser=$BROWSER --headless=$HEADLESS
+          mkdir -p reports
+          pytest -q --base-url=$BASE_URL --browser=$BROWSER --headless=$HEADLESS --junitxml=reports/junit.xml
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-artifacts
+          if-no-files-found: ignore
+          path: |
+            reports
+            downloads
 
       - name: Shutdown LocalAutomationApp
         if: always()

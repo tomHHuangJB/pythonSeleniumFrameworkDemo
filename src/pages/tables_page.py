@@ -24,7 +24,8 @@ class TablesPage(BasePage):
         self.select_by_visible_text(self.test_id(f"row-status-{row_id}"), status)
 
     def next_cursor_page(self) -> None:
-        self.click(self.cursor_next)
+        # CI runs can have overlay timing issues; JS click avoids intercepted clicks.
+        self.js_click(self.cursor_next)
 
     def next_offset_page(self) -> None:
         self.click(self.offset_next)

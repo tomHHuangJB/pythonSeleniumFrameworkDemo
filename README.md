@@ -70,6 +70,56 @@ Notes:
 - In Jenkins, you can toggle `USE_APP_PROFILE` to auto-set `BASE_URL` to `http://local-frontend:5173`.
 - Local SCM uses a mounted repo at `file:///opt/python-repo`, with local checkout enabled in `docker-compose.jenkins.yml`.
 
+Jenkins API token setup:
+1) Start Jenkins:
+```bash
+docker compose -f docker-compose.jenkins.yml up -d --build
+```
+2) If needed, fetch the initial admin password:
+```bash
+docker exec python-selenium-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+3) Open Jenkins: `http://localhost:9082`
+4) Log in and click your username (top-right) -> Configure.
+5) In API Token, click Add new Token, name it, then Generate.
+6) Copy the token value.
+7) Use it as `TOKEN` in the hook or `scripts/trigger-jenkins.sh`.
+
+Auto-trigger local Jenkins on push (local-only):
+1) Create a Jenkins API token for your user (Profile -> Configure -> API Token).
+2) Add a `post-push` hook in this repo to call Jenkins with a CSRF crumb.
+3) Push new commits from this repo to trigger builds automatically.
+
+Minimal hook (replace USER/TOKEN):
+```bash
+cat > .git/hooks/post-push <<'EOF'
+#!/bin/sh
+JENKINS_URL="http://localhost:9082"
+JOB_NAME="python-selenium-ci"
+USER="your-user"
+TOKEN="your-api-token"
+CRUMB_JSON=$(curl -sS -u "$USER:$TOKEN" "$JENKINS_URL/crumbIssuer/api/json" 2>/dev/null || true)
+CRUMB=$(printf '%s' "$CRUMB_JSON" | sed -n 's/.*"crumb":"\\([^"]*\\)".*/\\1/p')
+CRUMB_FIELD=$(printf '%s' "$CRUMB_JSON" | sed -n 's/.*"crumbRequestField":"\\([^"]*\\)".*/\\1/p')
+DATA='json={}'
+if [ -n "$CRUMB" ] && [ -n "$CRUMB_FIELD" ]; then
+  curl -sS -X POST -u "$USER:$TOKEN" -H "$CRUMB_FIELD: $CRUMB" \
+    -H "Content-Type: application/x-www-form-urlencoded" --data "$DATA" \
+    "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+else
+  curl -sS -X POST -u "$USER:$TOKEN" -H "Content-Type: application/x-www-form-urlencoded" \
+    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+fi
+EOF
+chmod +x .git/hooks/post-push
+```
+
+Alternative: copy the tracked hook template and edit it:
+```bash
+cp scripts/post-push.example .git/hooks/post-push
+chmod +x .git/hooks/post-push
+```
+
 ## Troubleshooting
 - `host.docker.internal` not resolving: set `BASE_URL` to your host IP (e.g. `http://192.168.1.10:5173`) or use the `app` profile.
 - Wrong LocalAutomationApp path: update `LOCAL_AUTOMATION_APP_DIR` in `.env`.

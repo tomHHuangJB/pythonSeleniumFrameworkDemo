@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+import re
 import pytest
 
 from utils.driver_factory import create_driver
@@ -37,6 +39,13 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
     if report.when != "call" or not report.failed or getattr(report, "wasxfail", False):
         return
+
+    driver = item.funcargs.get("driver")
+    if driver:
+        reports_dir = Path("reports") / "screenshots"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", item.nodeid)
+        driver.save_screenshot(str(reports_dir / f"{safe_name}.png"))
 
     summary = f"Test failed: {item.nodeid}"
     description = "\n".join(
