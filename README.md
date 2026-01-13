@@ -120,6 +120,17 @@ cp scripts/post-push.example .git/hooks/post-push
 chmod +x .git/hooks/post-push
 ```
 
+Auto-trigger local Jenkins on commit (local-only):
+1) Create a Jenkins API token for your user (Profile -> Configure -> API Token).
+2) Add a `post-commit` hook in this repo to call Jenkins with a CSRF crumb.
+3) Commit changes locally to trigger builds automatically.
+
+Alternative: copy the tracked hook template and edit it:
+```bash
+cp scripts/post-commit.example .git/hooks/post-commit
+chmod +x .git/hooks/post-commit
+```
+
 ## Troubleshooting
 - `host.docker.internal` not resolving: set `BASE_URL` to your host IP (e.g. `http://192.168.1.10:5173`) or use the `app` profile.
 - Wrong LocalAutomationApp path: update `LOCAL_AUTOMATION_APP_DIR` in `.env`.

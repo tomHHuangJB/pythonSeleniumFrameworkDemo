@@ -1,0 +1,25 @@
+#!/bin/sh
+# Example git post-commit hook to trigger a local Jenkins build.
+# Usage:
+# 1) Copy this file to .git/hooks/post-commit
+# 2) Update USER/TOKEN/JOB_NAME if needed
+# 3) chmod +x .git/hooks/post-commit
+
+JENKINS_URL="http://localhost:9082"
+JOB_NAME="python-selenium-ci"
+USER="your-user"
+TOKEN="your-api-token"
+
+CRUMB_JSON=$(curl -sS -u "$USER:$TOKEN" "$JENKINS_URL/crumbIssuer/api/json" 2>/dev/null || true)
+CRUMB=$(printf '%s' "$CRUMB_JSON" | sed -n 's/.*"crumb":"\([^"]*\)".*/\1/p')
+CRUMB_FIELD=$(printf '%s' "$CRUMB_JSON" | sed -n 's/.*"crumbRequestField":"\([^"]*\)".*/\1/p')
+DATA='json={}'
+
+if [ -n "$CRUMB" ] && [ -n "$CRUMB_FIELD" ]; then
+  curl -sS -X POST -u "$USER:$TOKEN" -H "$CRUMB_FIELD: $CRUMB" \
+    -H "Content-Type: application/x-www-form-urlencoded" --data "$DATA" \
+    "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+else
+  curl -sS -X POST -u "$USER:$TOKEN" -H "Content-Type: application/x-www-form-urlencoded" \
+    --data "$DATA" "$JENKINS_URL/job/$JOB_NAME/build" >/dev/null
+fi
